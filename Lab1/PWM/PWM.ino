@@ -16,7 +16,7 @@ void loop() {
   ledcWriteChannel(LEDCHANNEL, brightness);
   brightness += direction * 10;
   delay(200);
-  if (brightness == 200 || brightness == 0) {
+  if (brightness == 100 || brightness == 0) {
     direction *= -1;
   }
 }

@@ -20,7 +20,10 @@ uint16_t green_light = 0;
 uint16_t blue_light = 0;
 
 void get_data() {
-  if (!apds.readAmbientLight(ambient_light) || !apds.readRedLight(red_light) || !apds.readGreenLight(green_light) || !apds.readBlueLight(blue_light)) {
+  if (!apds.readAmbientLight(ambient_light)
+      || !apds.readRedLight(red_light)
+      || !apds.readGreenLight(green_light)
+      || !apds.readBlueLight(blue_light)) {
     Serial.println("Error reading light values");
   } else {
     Serial.print("Ambient: ");

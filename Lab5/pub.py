@@ -1,6 +1,8 @@
 import paho.mqtt.client as mqtt
 from time import sleep
 
+SERVER_IP = "192.168.137.224"
+
 
 def on_connect(client: mqtt.Client, userdata, flags, rc: int) -> None:
     print("Connected with result code: " + str(rc))
@@ -8,10 +10,10 @@ def on_connect(client: mqtt.Client, userdata, flags, rc: int) -> None:
     sleep(2)
 
     print("Sending message.")
-    client.publish("hello/world", "This is a test")
+    client.publish("receiving/esp", "This is a test")
 
 
 client = mqtt.Client()
 client.on_connect = on_connect
-client.connect("localhost", 1883, 60)
+client.connect(SERVER_IP, 1883, 60)
 client.loop_forever()

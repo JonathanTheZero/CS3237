@@ -7,7 +7,7 @@ const char *pass = "jxjw7723";
 // Test Mosquitto server, see: https://test.mosquitto.org
 char *server = "mqtt://192.168.137.224:1883";
 
-char *subscribeTopic = "foo";
+char *subscribeTopic = "hello/esp";
 char *publishTopic = "hello/esp";
 
 ESP32MQTTClient mqttClient;  // all params are set later

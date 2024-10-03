@@ -5,17 +5,8 @@
 #include <DHT.h>
 #include <DHT_U.h>
 
-#define DHTPIN 2     // Digital pin connected to the DHT sensor 
-// Feather HUZZAH ESP8266 note: use pins 3, 4, 5, 12, 13 or 14 --
-// Pin 15 can work but DHT must be disconnected during program upload.
-
-// Uncomment the type of sensor in use:
-//#define DHTTYPE    DHT11     // DHT 11
-#define DHTTYPE    DHT22     // DHT 22 (AM2302)
-//#define DHTTYPE    DHT21     // DHT 21 (AM2301)
-
-// See guide for details on sensor wiring and usage:
-//   https://learn.adafruit.com/dht/overview
+#define DHTPIN 16
+#define DHTTYPE DHT11
 
 DHT_Unified dht(DHTPIN, DHTTYPE);
 
@@ -28,7 +19,8 @@ const char *pass = "jxjw7723";
 char *server = "mqtt://192.168.137.224:1883";
 
 char *subscribeTopic = "receiving/esp";
-char *publishTopic = "hello/esp";
+char *topic1 = "weather/temp",
+     *topic2 = "weather/humidity";
 
 ESP32MQTTClient mqttClient;  // all params are set later
 
@@ -37,6 +29,7 @@ void setup() {
   log_i();
   log_i("setup, ESP.getSdkVersion(): ");
   log_i("%s", ESP.getSdkVersion());
+  dht.begin();
 
   mqttClient.enableDebuggingMessages();
 
@@ -52,11 +45,25 @@ void setup() {
   mqttClient.loopStart();
 }
 
-int pubCount = 0;
-
 void loop() {
-  String msg = "Hello: " + String(pubCount++);
-  mqttClient.publish(publishTopic, msg, 0, false);
+  sensors_event_t event;
+  float temp,
+    humidity;
+  dht.temperature().getEvent(&event);
+  if (isnan(event.temperature)) {
+    Serial.println(F("Error reading temperature!"));
+  } else {
+    temp = event.temperature;
+  }
+
+  dht.humidity().getEvent(&event);
+  if (isnan(event.relative_humidity)) {
+    Serial.println(F("Error reading humidity!"));
+  } else {
+    humidity = event.relative_humidity;
+  }
+  mqttClient.publish(topic1, "Temp: " + String(temp) + " °C", 0, false);
+  mqttClient.publish(topic2, "Humidity: " + String(humidity) + " %", 0, false);
   delay(2000);
 }
 

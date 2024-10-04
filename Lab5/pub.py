@@ -1,7 +1,7 @@
 import paho.mqtt.client as mqtt
 from time import sleep
 
-SERVER_IP = "192.168.137.224"
+SERVER_IP = "192.168.138.224"
 
 
 def on_connect(client: mqtt.Client, userdata, flags, rc: int) -> None:

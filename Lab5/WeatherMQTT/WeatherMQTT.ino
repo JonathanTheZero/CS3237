@@ -16,7 +16,7 @@ const char *ssid = "Galaxy A53 5G 1EBE";
 const char *pass = "jxjw7723";
 
 // Test Mosquitto server, see: https://test.mosquitto.org
-char *server = "mqtt://192.168.137.224:1883";
+char *server = "mqtt://192.168.138.224:1883";
 
 char *subscribeTopic = "receiving/esp";
 char *topic1 = "weather/temp",
@@ -62,6 +62,7 @@ void loop() {
   } else {
     humidity = event.relative_humidity;
   }
+  
   mqttClient.publish(topic1, "Temp: " + String(temp) + " °C", 0, false);
   mqttClient.publish(topic2, "Humidity: " + String(humidity) + " %", 0, false);
   delay(2000);

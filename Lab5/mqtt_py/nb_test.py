@@ -62,7 +62,9 @@ def parameter_test(step_size: int = 2) -> None:
         round(x * step_size, 2)
         for x in range(int(1 / step_size), int(1 / step_size * 100) + 1)
     ]:
-        accuracy: float | None = train_model(train_size=train_size)
+        if train_size == 0.0:
+            continue
+        accuracy: float | None = train_model(train_size=train_size / 100)
         if accuracy is not None:
             accuracies.append((accuracy, train_size))
 

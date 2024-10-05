@@ -1,7 +1,7 @@
 from typing import Any, Literal
 import paho.mqtt.client as mqtt
 from time import sleep
-from nb_classifier import WindowState, train_model, predict
+from nb_classifier import WindowState, train_model, predict_window_state
 
 
 SERVER_IP = "192.168.138.224"
@@ -45,7 +45,7 @@ def handle_message_receive(client: mqtt.Client, message: mqtt.MQTTMessage) -> No
         print("Invalid sensor data. Not sending a response.")
         return
 
-    prediction: WindowState = predict(temperature, humidity)
+    prediction: WindowState = predict_window_state(temperature, humidity)
 
     print("Predicted and sending back: ", prediction)
     client.publish(PUBLISH_TOPIC, prediction)

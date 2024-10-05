@@ -22,13 +22,12 @@ const char *ssid = "Galaxy A53 5G 1EBE";
 const char *pass = "jxjw7723";
 const char *server = "mqtt://192.168.138.224:1883";
 const char *subscribeTopic = "receiving/esp";
-const char *temp_topic = "weather/temp",
-           *hum_topic = "weather/humidity";
+const char *topic = "weather/data";
 
 String responses[] = {
-  "Too hot.",
-  "Too cold.",
-  "Moderate."
+  "open",
+  "closed",
+  "partial"
 };
 
 ESP32MQTTClient mqttClient;
@@ -113,8 +112,11 @@ void sendWeatherData() {
     humidity = event.relative_humidity;
   }
 
-  mqttClient.publish(temp_topic, "Temp: " + String(temp) + " °C", 0, false);
-  mqttClient.publish(hum_topic, "Humidity: " + String(humidity) + " %", 0, false);
+  mqttClient.publish(
+    topic,
+    "Temperature: " + String(temperature) + "°C, Humidity: " + String(humidity) + "%",
+    0,
+    false);
   Serial.println("Data has been sent!");
 }
 
@@ -134,7 +136,7 @@ void onMqttConnect(esp_mqtt_client_handle_t client) {
         // close window if too cold
         moveToLeft();
         has_received = true;
-      } else if(message.equals(responses[2])){
+      } else if (message.equals(responses[2])) {
         // moderate temperature else
         moveToMiddle();
         has_received = true;

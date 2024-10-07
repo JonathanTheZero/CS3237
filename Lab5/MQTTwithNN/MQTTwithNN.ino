@@ -6,12 +6,15 @@
 #include <DHT_U.h>
 #include <ESP32Servo.h>
 
+
 #define uS_TO_S_FACTOR 1000000ULL
 #define TIME_TO_SLEEP 20
+
 
 #define SERVO_PIN 18
 Servo myservo;
 int pos;
+
 
 #define DHTPIN 16
 #define DHTTYPE DHT11
@@ -22,7 +25,7 @@ const char *ssid = "Galaxy A53 5G 1EBE";
 const char *pass = "jxjw7723";
 const char *server = "mqtt://192.168.138.224:1883";
 const char *subscribeTopic = "receiving/esp";
-const char *topic = "weather/data";
+const char *publishTopic = "weather/data";
 
 String responses[] = {
   "open",
@@ -30,8 +33,10 @@ String responses[] = {
   "partial"
 };
 
+
 ESP32MQTTClient mqttClient;
 bool has_received;
+
 
 void setup() {
   Serial.begin(115200);
@@ -87,11 +92,13 @@ void setup() {
   esp_deep_sleep_start();
 }
 
+
 void loop() {
   // this is not called
 }
 
-void sendWeatherData() {
+
+bool sendWeatherData() {
   sensors_event_t event;
   float temp,
     humidity;
@@ -99,7 +106,7 @@ void sendWeatherData() {
   dht.temperature().getEvent(&event);
   if (isnan(event.temperature)) {
     Serial.println(F("Error reading temperature!"));
-    return;
+    return false;
   } else {
     temp = event.temperature;
   }
@@ -107,18 +114,20 @@ void sendWeatherData() {
   dht.humidity().getEvent(&event);
   if (isnan(event.relative_humidity)) {
     Serial.println(F("Error reading humidity!"));
-    return;
+    return false;
   } else {
     humidity = event.relative_humidity;
   }
 
   mqttClient.publish(
-    topic,
-    "Temperature: " + String(temperature) + "°C, Humidity: " + String(humidity) + "%",
+    publishTopic,
+    "Temperature: " + String(temp) + "°C, Humidity: " + String(humidity) + "%",
     0,
     false);
   Serial.println("Data has been sent!");
+  return true;
 }
+
 
 void onMqttConnect(esp_mqtt_client_handle_t client) {
   if (mqttClient.isMyTurn(client)) {
@@ -172,6 +181,7 @@ void print_wakeup_reason() {
       break;
   }
 }
+
 
 void handleMQTT(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data) {
   auto *event = static_cast<esp_mqtt_event_handle_t>(event_data);

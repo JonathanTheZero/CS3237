@@ -10,7 +10,7 @@ void setup() {
 void loop() {
   int analogReading = analogRead(FORCE_SENSOR_PIN);
 
-  if (analogReading == 0) {
+  if (analogReading <= 10) {
     return;
   }
 
@@ -25,7 +25,7 @@ void loop() {
     Serial.println(" -> light squeeze");
   } else if (analogReading < 800) {  // from 500 to 799
     Serial.println(" -> medium squeeze");
-  } else {  // from 800 to 1023
+  } else {
     Serial.println(" -> big squeeze");
   }
 

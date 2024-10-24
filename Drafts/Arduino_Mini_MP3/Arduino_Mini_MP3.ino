@@ -3,7 +3,11 @@
 #include "DFRobotDFPlayerMini.h"
 
 
-SoftwareSerial mySoftwareSerial(10, 11);  // RX, TX
+#define RX_PORT 27
+#define TX_PORT 26
+
+
+SoftwareSerial mySoftwareSerial(RX_PORT, TX_PORT);
 DFRobotDFPlayerMini myDFPlayer;
 void printDetail(uint8_t type, int value);
 
@@ -11,12 +15,14 @@ void printDetail(uint8_t type, int value);
 void setup() {
   mySoftwareSerial.begin(9600);
   Serial.begin(115200);
+  delay(1000);
 
   Serial.println();
   Serial.println(F("DFRobot DFPlayer Mini Demo"));
   Serial.println(F("Initializing DFPlayer ... (May take 3~5 seconds)"));
 
   //Use softwareSerial to communicate with mp3.
+  delay(1000);
   if (!myDFPlayer.begin(mySoftwareSerial)) {
     Serial.println(F("Unable to begin:"));
     Serial.println(F("1.Please recheck the connection!"));
@@ -25,7 +31,7 @@ void setup() {
       ;
   }
   Serial.println(F("DFPlayer Mini online."));
-
+  delay(1000);
   myDFPlayer.volume(30);  //Set volume value. From 0 to 30
   myDFPlayer.play(1);     //Play the first mp3
 }

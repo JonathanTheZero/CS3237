@@ -60,3 +60,6 @@ catch {
   Write-Host "Error creating firewall rules" -ForegroundColor Red
   exit
 }
+
+Write-Host "Press Enter to exit..." -ForegroundColor Yellow
+[void][System.Console]::ReadLine()

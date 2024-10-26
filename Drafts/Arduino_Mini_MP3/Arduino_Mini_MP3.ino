@@ -23,17 +23,20 @@ void setup() {
 
   //Use softwareSerial to communicate with mp3.
   delay(1000);
-  if (!myDFPlayer.begin(mySoftwareSerial)) {
-    Serial.println(F("Unable to begin:"));
-    Serial.println(F("1.Please recheck the connection!"));
-    Serial.println(F("2.Please insert the SD card!"));
-    while (true)
-      ;
+  while (!myDFPlayer.begin(mySoftwareSerial)) {
+    Serial.println(F("Unable to begin, retrying in 2 seconds..."));
+
+    if (myDFPlayer.available()) {
+      printDetail(myDFPlayer.readType(), myDFPlayer.read());
+    }
+    delay(2000);
   }
   Serial.println(F("DFPlayer Mini online."));
   delay(1000);
   myDFPlayer.volume(30);  //Set volume value. From 0 to 30
-  myDFPlayer.play(1);     //Play the first mp3
+  myDFPlayer.EQ(5);
+  myDFPlayer.play(2);     //Play the first mp3
+  Serial.println("Sound playing...");
 }
 
 

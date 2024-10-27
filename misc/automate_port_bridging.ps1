@@ -36,3 +36,6 @@ catch {
     Write-Host "Error registering the scheduled task: $_" -ForegroundColor Red
     exit 1
 }
+
+Write-Host "Press Enter to exit..." -ForegroundColor Yellow
+[void][System.Console]::ReadLine()

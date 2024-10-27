@@ -1,6 +1,7 @@
 from time import sleep
 import paho.mqtt.client as mqtt
 
+
 SERVER_IP = "192.168.138.224"
 TOPIC = "sound/track"
 
@@ -16,13 +17,15 @@ client.loop_start()
 
 
 try:
+    sleep(2)
+    print()
     while True:
         message: str = input("Type the track ID to send:")
         client.publish(TOPIC, message)
         print("Sent message:", message)
 
 except KeyboardInterrupt:
-    print("Disconnecting...")
+    print("\nDisconnecting...")
 
 finally:
     client.loop_stop()

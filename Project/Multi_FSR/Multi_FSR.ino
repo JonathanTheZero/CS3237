@@ -1,38 +1,68 @@
 #include "Arduino.h"
 #include "SoftwareSerial.h"
 #include "DFRobotDFPlayerMini.h"
-#include <WiFi.h>
-#include "ESP32MQTTClient.h"
 
 
-#define RX_PORT 27
-#define TX_PORT 26
+#define SPEAKER_RX_PORT 27
+#define SPEAKER_TX_PORT 26
+#define FORCE_SENSOR_PIN_1 35
+#define FORCE_SENSOR_PIN_2 32
+#define FORCE_SENSOR_PIN_3 33
+#define FORCE_SENSOR_PIN_4 25
 
 
-SoftwareSerial speakerSoftwareSerial(RX_PORT, TX_PORT);
+SoftwareSerial mySoftwareSerial(SPEAKER_RX_PORT, SPEAKER_TX_PORT);
 DFRobotDFPlayerMini myDFPlayer;
 
 
-const char *ssid = "Galaxy A53 5G 1EBE";
-const char *pass = "jxjw7723";  //temp password for this device only
-
-
-char *server = "mqtt://192.168.118.224:1883";
-char *trackTopic = "sound/track";
-ESP32MQTTClient mqttClient;
-
-
 void setup() {
-  speakerSoftwareSerial.begin(9600);
   Serial.begin(115200);
-  delay(1000);
 
-  initialise_mqtt();
+  // set the ADC attenuation to 11 dB (up to ~3.3V input)
+  analogSetAttenuation(ADC_11db);
   initialise_dfplayer();
 }
 
 
 void loop() {
+  int readings[4] = {
+    analogRead(FORCE_SENSOR_PIN_1),
+    analogRead(FORCE_SENSOR_PIN_2),
+    analogRead(FORCE_SENSOR_PIN_3),
+    analogRead(FORCE_SENSOR_PIN_4)
+  };
+
+  for (int i = 0; i < 4; i++) {
+    if (readings[i] <= 10) {
+      continue;
+    }
+
+    Serial.print(F("[FSR] The force sensor "));
+    Serial.print(i + 1);
+    Serial.print(F(" value = "));
+    Serial.print(readings[i]);
+
+    if (readings[i] < 10) {
+      Serial.println(F(" -> no pressure"));
+    } else if (readings[i] < 200) {
+      Serial.println(F(" -> light touch"));
+    } else if (readings[i] < 500) {
+      Serial.println(F(" -> light squeeze"));
+    } else if (readings[i] < 800) {
+      Serial.println(F(" -> medium squeeze"));
+    } else {
+      Serial.println(F(" -> big squeeze"));
+    }
+  }
+
+  if (readings[0] >= 1000
+      && readings[1] >= 1000
+      && readings[2] >= 1000
+      && readings[3] >= 1000) {
+    play_track(2);
+  }
+
+  delay(1000);
 }
 
 
@@ -40,7 +70,7 @@ void initialise_dfplayer() {
   Serial.println(F("[DFPlayer] Initializing DFPlayer ... (May take 3~5 seconds)"));
 
   delay(1000);
-  while (!myDFPlayer.begin(speakerSoftwareSerial)) {
+  while (!myDFPlayer.begin(mySoftwareSerial)) {
     Serial.println(F("[DFPlayer] Unable to begin, retrying in 2 seconds..."));
 
     if (myDFPlayer.available()) {
@@ -59,79 +89,36 @@ void play_track(int trackID) {
     Serial.println(F("[DFPlayer] Received track ID is not valid."));
     return;
   }
-
   Serial.print(F("[DFPlayer] Playing track with ID "));
   Serial.println(trackID);
   myDFPlayer.play(trackID);
 }
 
 
-void initialise_mqtt() {
-  log_i();
-  log_i("setup, ESP.getSdkVersion(): ");
-  log_i("%s", ESP.getSdkVersion());
-
-
-  mqttClient.enableDebuggingMessages();
-  mqttClient.setURI(server);
-  mqttClient.enableLastWillMessage("lwt", "I am going offline");
-  mqttClient.setKeepAlive(30);
-  WiFi.begin(ssid, pass);
-  WiFi.setHostname("ESP32 speaker client");
-
-
-  while (WiFi.status() != WL_CONNECTED) {
-    Serial.print('.');
-    delay(100);
-  }
-  Serial.println();
-  mqttClient.loopStart();
-}
-
-
-void onMqttConnect(esp_mqtt_client_handle_t client) {
-  Serial.println(F("[MQTT] Connected to the MQTT broker and subscribing to topics..."));
-
-  mqttClient.subscribe(trackTopic, [](const String &payload) {
-    Serial.print(F("[MQTT] Received: "));
-    Serial.println(String(trackTopic) + String(" ") + String(payload.c_str()));
-
-    int value = payload.toInt();
-    play_track(value);
-  });
-}
-
-
-void handleMQTT(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data) {
-  auto *event = static_cast<esp_mqtt_event_handle_t>(event_data);
-  mqttClient.onEventCallback(event);
-}
-
-
 void printDetail(uint8_t type, int value) {
   switch (type) {
     case TimeOut:
-      Serial.println(F("[DFPlayer] Time Out!"));
+      Serial.println(F("Time Out!"));
       break;
     case WrongStack:
-      Serial.println(F("[DFPlayer] Stack Wrong!"));
+      Serial.println(F("Stack Wrong!"));
       break;
     case DFPlayerCardInserted:
-      Serial.println(F("[DFPlayer] Card Inserted!"));
+      Serial.println(F("Card Inserted!"));
       break;
     case DFPlayerCardRemoved:
-      Serial.println(F("[DFPlayer] Card Removed!"));
+      Serial.println(F("Card Removed!"));
       break;
     case DFPlayerCardOnline:
-      Serial.println(F("[DFPlayer] Card Online!"));
+      Serial.println(F("Card Online!"));
       break;
     case DFPlayerPlayFinished:
-      Serial.print(F("[DFPlayer] Number: "));
+      Serial.print(F("Number:"));
       Serial.print(value);
       Serial.println(F(" Play Finished!"));
       break;
     case DFPlayerError:
-      Serial.print(F("[DFPlayer] DFPlayerError:"));
+      Serial.print(F("DFPlayerError:"));
       switch (value) {
         case Busy:
           Serial.println(F("Card not found"));

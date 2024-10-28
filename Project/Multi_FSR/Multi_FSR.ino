@@ -3,20 +3,22 @@
 #include "DFRobotDFPlayerMini.h"
 
 
-#define SPEAKER_RX_PORT 27
-#define SPEAKER_TX_PORT 26
 #define FORCE_SENSOR_PIN_1 35
 #define FORCE_SENSOR_PIN_2 32
 #define FORCE_SENSOR_PIN_3 33
-#define FORCE_SENSOR_PIN_4 25
+#define FORCE_SENSOR_PIN_4 34
+#define READING_THRESHOLD 10
+#define AUDIO_PLAYING_VALUE 513
 
-
-SoftwareSerial mySoftwareSerial(SPEAKER_RX_PORT, SPEAKER_TX_PORT);
-DFRobotDFPlayerMini myDFPlayer;
+#define SPEAKER_RX_PORT 27
+#define SPEAKER_TX_PORT 26
+SoftwareSerial speakerSoftwareSerial(SPEAKER_RX_PORT, SPEAKER_TX_PORT);
+DFRobotDFPlayerMini DFAudioPlayer;
 
 
 void setup() {
   Serial.begin(115200);
+  speakerSoftwareSerial.begin(9600);
 
   // set the ADC attenuation to 11 dB (up to ~3.3V input)
   analogSetAttenuation(ADC_11db);
@@ -25,6 +27,12 @@ void setup() {
 
 
 void loop() {
+  read_values_and_act();
+  delay(1000);
+}
+
+
+void read_values_and_act() {
   int readings[4] = {
     analogRead(FORCE_SENSOR_PIN_1),
     analogRead(FORCE_SENSOR_PIN_2),
@@ -33,15 +41,16 @@ void loop() {
   };
 
   for (int i = 0; i < 4; i++) {
-    if (readings[i] <= 10) {
+    if (readings[i] <= READING_THRESHOLD) {
       continue;
     }
 
-    Serial.print(F("[FSR] The force sensor "));
+    Serial.print(F("[FSR] Force sensor "));
     Serial.print(i + 1);
-    Serial.print(F(" value = "));
+    Serial.print(F(" received value of "));
     Serial.print(readings[i]);
 
+    // Values are arbitrary for now
     if (readings[i] < 10) {
       Serial.println(F(" -> no pressure"));
     } else if (readings[i] < 200) {
@@ -61,26 +70,25 @@ void loop() {
       && readings[3] >= 1000) {
     play_track(2);
   }
-
-  delay(1000);
 }
 
 
 void initialise_dfplayer() {
   Serial.println(F("[DFPlayer] Initializing DFPlayer ... (May take 3~5 seconds)"));
-
   delay(1000);
-  while (!myDFPlayer.begin(mySoftwareSerial)) {
+
+  while (!DFAudioPlayer.begin(speakerSoftwareSerial)) {
     Serial.println(F("[DFPlayer] Unable to begin, retrying in 2 seconds..."));
 
-    if (myDFPlayer.available()) {
-      printDetail(myDFPlayer.readType(), myDFPlayer.read());
+    if (DFAudioPlayer.available()) {
+      printDetail(DFAudioPlayer.readType(), DFAudioPlayer.read());
     }
     delay(2000);
   }
+
   Serial.println(F("[DFPlayer] DFPlayer Mini online."));
-  myDFPlayer.volume(30);  //Set volume value. From 0 to 30
-  myDFPlayer.EQ(5);
+  DFAudioPlayer.volume(30);
+  DFAudioPlayer.EQ(5);
 }
 
 
@@ -89,9 +97,17 @@ void play_track(int trackID) {
     Serial.println(F("[DFPlayer] Received track ID is not valid."));
     return;
   }
+
+  // Check if the player is already playing
+  if (DFAudioPlayer.readState() == AUDIO_PLAYING_VALUE) {
+    Serial.println(F("[DFPlayer] A track is already playing. Skipping play request."));
+    delay(250);
+    return;
+  }
+
   Serial.print(F("[DFPlayer] Playing track with ID "));
   Serial.println(trackID);
-  myDFPlayer.play(trackID);
+  DFAudioPlayer.play(trackID);
 }
 
 

@@ -6,12 +6,12 @@
 #include "ESP32MQTTClient.h"
 
 
-#define FORCE_SENSOR_PIN_1 35
+#define FORCE_SENSOR_PIN_1 33
 #define FORCE_SENSOR_PIN_2 32
-#define FORCE_SENSOR_PIN_3 33
+#define FORCE_SENSOR_PIN_3 35
 #define FORCE_SENSOR_PIN_4 34
 #define READING_THRESHOLD 10
-#define AUDIO_PLAYING_VALUE -1
+#define AUDIO_PLAYING_VALUE 513
 
 
 #define SPEAKER_RX_PORT 27
@@ -29,6 +29,7 @@ char *publishTopic[4] = {
   ("esp32/1/fsrs/2"),
   ("esp32/1/fsrs/3")
 };
+char *trackTopic = "esp32/1/track_id";
 ESP32MQTTClient mqttClient;
 
 
@@ -61,7 +62,7 @@ void initialise_mqtt() {
   mqttClient.enableLastWillMessage("lwt", "I am going offline");
   mqttClient.setKeepAlive(30);
   WiFi.begin(ssid, pass);
-  WiFi.setHostname("ESP32 speaker client");
+  WiFi.setHostname("ESP32_speaker_client");
 
 
   while (WiFi.status() != WL_CONNECTED) {
@@ -76,13 +77,13 @@ void initialise_mqtt() {
 void onMqttConnect(esp_mqtt_client_handle_t client) {
   Serial.println(F("[MQTT] Connected to the MQTT broker and subscribing to topics..."));
 
-  // mqttClient.subscribe(trackTopic, [](const String &payload) {
-  //   Serial.print(F("[MQTT] Received: "));
-  //   Serial.println(String(trackTopic) + String(" ") + String(payload.c_str()));
+  mqttClient.subscribe(trackTopic, [](const String &payload) {
+    Serial.print(F("[MQTT] Received: "));
+    Serial.println(String(trackTopic) + String(" ") + String(payload.c_str()));
 
-  //   int value = payload.toInt();
-  //   play_track(value);
-  // });
+    int value = payload.toInt();
+    play_track(value);
+  });
 }
 
 
@@ -99,9 +100,11 @@ void read_values_and_act() {
     analogRead(FORCE_SENSOR_PIN_3),
     analogRead(FORCE_SENSOR_PIN_4)
   };
+  bool all_pressed = true;
 
   for (int i = 0; i < 4; i++) {
     if (readings[i] <= READING_THRESHOLD) {
+      all_pressed = false;
       continue;
     }
 
@@ -126,10 +129,7 @@ void read_values_and_act() {
     mqttClient.publish(publishTopic[i], msg, 0, false);
   }
 
-  if (readings[0] >= 1000
-      && readings[1] >= 1000
-      && readings[2] >= 1000
-      && readings[3] >= 1000) {
+  if (all_pressed) {
     play_track(2);
   }
 }
@@ -171,7 +171,7 @@ void play_track(int trackID) {
   Serial.print(F("[DFPlayer] Playing track with ID "));
   Serial.println(trackID);
   DFAudioPlayer.play(trackID);
-  delay(100);
+  delay(3000);
 }
 
 

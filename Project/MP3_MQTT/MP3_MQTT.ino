@@ -18,7 +18,7 @@ const char *pass = "jxjw7723";  //temp password for this device only
 
 
 char *server = "mqtt://192.168.118.224:1883";
-char *trackTopic = "sound/track";
+char *trackTopic = "esp32/1/track_id";
 ESP32MQTTClient mqttClient;
 
 

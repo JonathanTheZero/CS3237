@@ -2,24 +2,26 @@
 #include "Arduino.h"
 #include <WiFi.h>
 #include "ESP32MQTTClient.h"
+
+
 const char *ssid = "DESKTOP-496OVRO";
 const char *pass = "9Wz7344&";
-
 char *server = "mqtt://192.168.137.1:1883";
-
 char *publishTopic[2] = { "esp32/0/load_cells/0", "esp32/0/load_cells/1" };
 
 ESP32MQTTClient mqttClient;
 
+
 HX711 scale0;
 HX711 scale1;
-
 HX711 scales[2] = { scale0, scale1 };
+
 
 //uint8_t dataPin = 6;
 //uint8_t clockPin = 7;
 uint8_t dataPin[2] = { 26, 13 };   //for esp32
 uint8_t clockPin[2] = { 25, 12 };  //for esp32
+
 
 void setup() {
   Serial.begin(115200);
@@ -105,11 +107,13 @@ void loop() {
   delay(250);
 }
 
+
 void onMqttConnect(esp_mqtt_client_handle_t client) {
   if (mqttClient.isMyTurn(client))  // can be omitted if only one client
   {
   }
 }
+
 
 void handleMQTT(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data) {
   auto *event = static_cast<esp_mqtt_event_handle_t>(event_data);

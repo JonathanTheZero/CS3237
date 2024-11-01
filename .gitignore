@@ -219,3 +219,6 @@ cython_debug/
 /venv/
 /Lab4/data/
 /Lab4/examples/
+
+*.npy
+*.pk1

@@ -5,19 +5,30 @@ import numpy as np
 from svm import load_and_train_model, predict_seat_position
 
 
+SEAT_POSITIONS_TRACK_MAPPING: dict[str, int] = {
+    "no_contact": -1,
+    "beep": 1,
+    "slouching": 4,
+    "backward_lean": 2,
+    "leaning_back": 2,
+    "imbalance_left": 5,
+    "imbalance_right": 5,
+    "eyes_too_far": 6,
+    "eyes_too_close": 3,
+}
 SERVER_IP = "192.168.138.224"
 SUBSCRIBE_TOPIC = "esp/#"
-PUBLISH_TOPIC = "receiving/esp"
+PUBLISH_TOPIC = "esp/2/track_id"
 
 
 # Expects the following format: 1,2,3,4,5,6,7,8
 def parse_sensor_data(data: str) -> list[int]:
     try:
-        array = [int(num) for num in data.split(",")]
+        array: list[int] = [int(num) for num in data.split(",")]
         return array
     except Exception as e:
-        print(f"Error parsing data: {e}")
-        raise e
+        print(f"Error parsing data string: {data}, failed with exception {e}")
+        return []
 
 
 def on_connect(client: mqtt.Client, userdata: Any, flags, rc: int) -> None:
@@ -37,15 +48,25 @@ def on_message(client: mqtt.Client, userdata: Any, message: mqtt.MQTTMessage) ->
     )
 
     if message.topic == "esp/data":
-        handle_message_receive(client, message)
+        handle_data_receival(client, message)
 
 
-def handle_message_receive(client: mqtt.Client, message: mqtt.MQTTMessage) -> None:
-    data = parse_sensor_data(message.payload.decode("UTF-8"))
-    prediction = predict_seat_position(data)
+def handle_data_receival(client: mqtt.Client, message: mqtt.MQTTMessage) -> None:
+    global SEAT_POSITIONS_TRACK_MAPPING
+    data: list[int] = parse_sensor_data(message.payload.decode("UTF-8"))
+    if data == []:
+        return
 
-    print("Predicted and sending back: ", prediction)
-    client.publish(PUBLISH_TOPIC, prediction)
+    prediction: str = predict_seat_position(data)
+    message_code: int = SEAT_POSITIONS_TRACK_MAPPING.get(prediction, -1)
+
+    if message_code == -1:
+        if prediction != "no_contact":
+            print("Error parsing SVM response:", prediction)
+        return
+
+    print("Predicted and sending back: ", message_code)
+    client.publish(PUBLISH_TOPIC, message_code)
 
 
 client = mqtt.Client()

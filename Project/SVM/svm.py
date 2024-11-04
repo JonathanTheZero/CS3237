@@ -1,3 +1,4 @@
+from typing import Literal
 import numpy as np
 import pandas as pd
 from sklearn.svm import SVC
@@ -41,7 +42,7 @@ def load_and_train_model():
 def predict_seat_position(data: list[int]) -> str:
     global SVM_MODEL
     if SVM_MODEL is None:
-        raise Exception("The model is not trained yet")
+        raise Exception("The model is not trained yet.")
 
     result: np.ndarray = SVM_MODEL.predict(pd.DataFrame([data]))
 

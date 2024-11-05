@@ -17,7 +17,7 @@ const char *ssid = "Galaxy A53 5G 1EBE";
 const char *pass = "jxjw7723";  //temp password for this device only
 
 
-char *server = "mqtt://192.168.118.224:1883";
+char *server = "mqtt://192.168.35.224:1883";
 char *trackTopic = "esp32/1/track_id";
 ESP32MQTTClient mqttClient;
 
@@ -63,6 +63,7 @@ void play_track(int trackID) {
   Serial.print(F("[DFPlayer] Playing track with ID "));
   Serial.println(trackID);
   myDFPlayer.play(trackID);
+  delay(4000);
 }
 
 
@@ -77,13 +78,14 @@ void initialise_mqtt() {
   mqttClient.enableLastWillMessage("lwt", "I am going offline");
   mqttClient.setKeepAlive(30);
   WiFi.begin(ssid, pass);
-  WiFi.setHostname("ESP32 speaker client");
+  WiFi.setHostname("ESP32_speaker_client");
 
 
   while (WiFi.status() != WL_CONNECTED) {
     Serial.print('.');
     delay(100);
   }
+
   Serial.println();
   mqttClient.loopStart();
 }

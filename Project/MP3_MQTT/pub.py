@@ -14,9 +14,10 @@ def on_connect(client: mqtt.Client, userdata, flags, rc: int) -> None:
 
 
 def on_message(client: mqtt.Client, userdata: Any, message: mqtt.MQTTMessage) -> None:
-    print(
-        f"Received message on topic '{message.topic}' with content: '{message.payload.decode('UTF-8')}'"
-    )
+    # print(
+    #     f"Received message on topic '{message.topic}' with content: '{message.payload.decode('UTF-8')}'"
+    # )
+    pass
 
 
 client = mqtt.Client()
@@ -30,7 +31,7 @@ try:
     sleep(2)
     print()
     while True:
-        message: str = input("Type the track ID to send:")
+        message: str = input("Type the track ID to send: ")
         client.publish(PUBLISH_TOPIC, message)
         print("Sent message to ESP32:", message)
 

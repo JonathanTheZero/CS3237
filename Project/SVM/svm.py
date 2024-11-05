@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Literal, Optional
 import numpy as np
 import pandas as pd
 from sklearn.svm import SVC
@@ -9,7 +9,7 @@ import os
 
 MODEL_FILEPATH = "./svm_model.pk1"
 DATA_FILEPATH = "./training_data.csv"
-SVM_MODEL: SVC | None = None
+SVM_MODEL: Optional[SVC] = None
 
 
 # If the model already exists as a file, load it from there
@@ -27,7 +27,7 @@ def load_and_train_model():
         SVM_MODEL = joblib.load(MODEL_FILEPATH)
         print("Model loaded from file.")
     else:
-        SVM_MODEL = SVC()
+        SVM_MODEL = SVC(random_state=42)
         SVM_MODEL.fit(X_train, y_train)
         print("Model trained and saved to file.")
         joblib.dump(SVM_MODEL, MODEL_FILEPATH)

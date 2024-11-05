@@ -5,6 +5,8 @@ import numpy as np
 from svm import load_and_train_model, predict_seat_position
 
 
+# Maps different seating positions/predictions from the model
+# to the track IDs of the *.mp3 files saved on the ESP32's SD Card
 SEAT_POSITIONS_TRACK_MAPPING: dict[str, int] = {
     "no_contact": -1,
     "beep": 1,
@@ -13,12 +15,14 @@ SEAT_POSITIONS_TRACK_MAPPING: dict[str, int] = {
     "leaning_back": 2,
     "imbalance_left": 5,
     "imbalance_right": 5,
+    "imbalance": 5,
     "eyes_too_far": 6,
     "eyes_too_close": 3,
+    "perfect": -1,
 }
 SERVER_IP = "192.168.138.224"
-SUBSCRIBE_TOPIC = "esp/#"
-PUBLISH_TOPIC = "esp/2/track_id"
+SUBSCRIBE_TOPIC = "esp32/#"
+PUBLISH_TOPIC = "esp32/2/track_id"
 
 
 # Expects the following format: 1,2,3,4,5,6,7,8

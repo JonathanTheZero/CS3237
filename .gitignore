@@ -222,3 +222,4 @@ cython_debug/
 
 *.npy
 *.pk1
+*.tflite

@@ -39,6 +39,12 @@ def load_and_train_model():
     print(f"Test set accuracy: {accuracy:.2f}")
 
 
+def get_model() -> SVC:
+    if SVM_MODEL is None:
+        raise Exception("The model is not trained yet.")
+    return SVM_MODEL
+
+
 def predict_seat_position(data: list[int]) -> str:
     global SVM_MODEL
     if SVM_MODEL is None:

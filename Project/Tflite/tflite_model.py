@@ -1,0 +1,106 @@
+import os
+
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
+
+from typing import Optional
+import numpy as np
+import tensorflow as tf
+from keras import Sequential, layers
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder
+import pandas as pd
+from tensorflow.lite.python.lite import TFLiteKerasModelConverterV2
+
+
+TFLITE_MODEL: Optional[tf.lite.Interpreter] = None
+LABEL_ENCODER_FILEPATH = "./output/label_encoder.npy"
+CSV_FILEPATH = "./training_data.csv"
+MODEL_FILEPATH = "./output/model.tflite"
+
+
+def train_and_load_model() -> None:
+    global TFLITE_MODEL
+
+    data = pd.read_csv(CSV_FILEPATH)
+    X = data.iloc[:, :-1].values.astype(float)
+    y = data.iloc[:, -1].values
+
+    label_encoder = LabelEncoder()
+    y = label_encoder.fit_transform(y)
+    np.save(LABEL_ENCODER_FILEPATH, label_encoder.classes_)
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=42
+    )
+
+    model = Sequential(
+        [
+            layers.Input(shape=(8,)),
+            layers.Dense(16, activation="relu"),
+            layers.Dense(8, activation="relu"),
+            layers.Dense(len(np.unique(y)), activation="softmax"),
+        ]
+    )
+
+    model.compile(
+        optimizer="adam", loss="sparse_categorical_crossentropy", metrics=["accuracy"]
+    )
+    model.fit(
+        X_train, y_train, epochs=10, batch_size=4, validation_data=(X_test, y_test)
+    )
+
+    loss, accuracy = model.evaluate(X_test, y_test)
+    print(f"Test Accuracy: {accuracy:.4f}")
+
+    converter: TFLiteKerasModelConverterV2 = tf.lite.TFLiteConverter.from_keras_model(
+        model
+    )
+    model_bytes: bytes = converter.convert()
+    with open(MODEL_FILEPATH, "wb") as f:
+        f.write(model_bytes)
+    TFLITE_MODEL = tf.lite.Interpreter(model_path=MODEL_FILEPATH)
+    TFLITE_MODEL.allocate_tensors()
+
+
+def get_model():
+    global TFLITE_MODEL
+    if TFLITE_MODEL is None:
+        raise Exception("The model has not been trained yet.")
+    return TFLITE_MODEL
+
+
+def load_model() -> None:
+    global TFLITE_MODEL
+    if os.path.exists(MODEL_FILEPATH):
+        TFLITE_MODEL = tf.lite.Interpreter(model_path=MODEL_FILEPATH)
+        TFLITE_MODEL.allocate_tensors()
+        print("TFLite model loaded from file.")
+    else:
+        print("TFLite model not found, training a new model.")
+        train_and_load_model()
+
+
+def predict_seat_position(data: list[int]) -> str:
+    global TFLITE_MODEL
+    if TFLITE_MODEL is None:
+        raise Exception("The model is not trained yet.")
+
+    input_details = TFLITE_MODEL.get_input_details()
+    output_details = TFLITE_MODEL.get_output_details()
+
+    input_data = np.array([data], dtype=np.float32)
+    TFLITE_MODEL.set_tensor(input_details[0]["index"], input_data)
+    TFLITE_MODEL.invoke()
+    prediction = np.argmax(TFLITE_MODEL.get_tensor(output_details[0]["index"]), axis=-1)
+
+    label_encoder_classes = np.load(LABEL_ENCODER_FILEPATH, allow_pickle=True)
+    return label_encoder_classes[prediction[0]]
+
+
+load_model()
+
+print(predict_seat_position([0, 0, 0, 0, 0, 0, 0, 0]))
+print(predict_seat_position([15000, 16002, 19186, 16092, 0, 834, 244, 0]))
+print(predict_seat_position([10000, 10000, 15000, 19000, 234, 0, 0, 5675]))
+print(predict_seat_position([18300, 16200, 19999, 12000, 834, 900, 900, 900]))

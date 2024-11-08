@@ -1,8 +1,8 @@
 import os
 
-from numpy._typing._array_like import NDArray
-
+# Do not use Cuda cores as my laptop doesn't have any
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+# Disable extensive logging during compiling
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
 from typing import Any, Optional
@@ -14,42 +14,47 @@ from sklearn.preprocessing import LabelEncoder
 import pandas as pd
 from tensorflow.lite.python.lite import TFLiteKerasModelConverterV2
 from OrderedEncoder import OrderedLabelEncoder
+from numpy._typing._array_like import NDArray
 
 
 TFLITE_MODEL: Optional[tf.lite.Interpreter] = None
 LABEL_ENCODER_FILEPATH = "./output/label_encoder.npy"
 CSV_FILEPATH = "./training_data.csv"
 MODEL_FILEPATH = "./output/model.tflite"
+POSITIONS_ORDERED: list[str] = [
+    "no_contact",
+    "perfect_posture",
+    "leaning_back",
+    "slouching",
+    "leaning_forward",
+    "leaning_left",
+    "leaning_right",
+]
 
 
 def train_and_load_model() -> None:
-    global TFLITE_MODEL
+    global TFLITE_MODEL, POSITIONS_ORDERED
 
-    data = pd.read_csv(CSV_FILEPATH)
+    data: pd.DataFrame = pd.read_csv(CSV_FILEPATH)
     X = data.iloc[:, :-1].values.astype(float)
     y = data.iloc[:, -1].values
-    print(y)
 
     label_encoder = OrderedLabelEncoder()
-    desired_order: list[str] = [
-        "no_contact",
-        "leaning_back",
-        "slouching",
-        "backward_lean",
-    ]
-    label_encoder.fit(desired_order)
+    label_encoder.fit(POSITIONS_ORDERED)
+
     y = label_encoder.transform(y)  # type: ignore
     np.save(LABEL_ENCODER_FILEPATH, label_encoder.classes_)
 
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.35, random_state=42
+        X, y, test_size=0.2, random_state=42
     )
 
     model = Sequential(
         [
             layers.Input(shape=(8,)),
+            layers.Dense(64, activation="relu"),
+            layers.Dense(32, activation="relu"),
             layers.Dense(16, activation="relu"),
-            layers.Dense(8, activation="relu"),
             layers.Dense(len(np.unique(y)), activation="softmax"),
         ]
     )
@@ -58,7 +63,7 @@ def train_and_load_model() -> None:
         optimizer="adam", loss="sparse_categorical_crossentropy", metrics=["accuracy"]
     )
     model.fit(
-        X_train, y_train, epochs=10, batch_size=4, validation_data=(X_test, y_test)
+        X_train, y_train, epochs=50, batch_size=4, validation_data=(X_test, y_test)
     )
 
     loss, accuracy = model.evaluate(X_test, y_test)

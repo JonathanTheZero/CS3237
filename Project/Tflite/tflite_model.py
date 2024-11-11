@@ -54,7 +54,7 @@ def train_and_load_model() -> None:
             layers.Input(shape=(8,)),
             layers.Dense(64, activation="relu"),
             layers.Dense(32, activation="relu"),
-            layers.Dense(16, activation="relu"),
+            # layers.Dense(16, activation="relu"),
             layers.Dense(len(np.unique(y)), activation="softmax"),
         ]
     )

@@ -52,9 +52,10 @@ def train_and_load_model() -> None:
     model = Sequential(
         [
             layers.Input(shape=(8,)),
+            layers.Dense(256, activation="relu"),
+            layers.Dense(128, activation="relu"),
             layers.Dense(64, activation="relu"),
-            layers.Dense(32, activation="relu"),
-            # layers.Dense(16, activation="relu"),
+            # layers.Dense(32, activation="relu"),
             layers.Dense(len(np.unique(y)), activation="softmax"),
         ]
     )
@@ -63,7 +64,12 @@ def train_and_load_model() -> None:
         optimizer="adam", loss="sparse_categorical_crossentropy", metrics=["accuracy"]
     )
     model.fit(
-        X_train, y_train, epochs=50, batch_size=4, validation_data=(X_test, y_test)
+        X_train,
+        y_train,
+        epochs=100,
+        batch_size=4,
+        validation_data=(X_test, y_test),
+        verbose="auto",
     )
 
     loss, accuracy = model.evaluate(X_test, y_test)

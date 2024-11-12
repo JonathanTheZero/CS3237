@@ -39,7 +39,7 @@ ESP32MQTTClient mqttClient;
 
 
 void setup() {
-  speakerSoftwareSerial.begin(9600);
+  // speakerSoftwareSerial.begin(9600);
   Serial.begin(115200);
 
   initialise_mqtt();
@@ -208,10 +208,10 @@ int position_to_trackID(Positions prediction) {
 }
 
 
-// void handleMQTT(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data) {
-//   auto *event = static_cast<esp_mqtt_event_handle_t>(event_data);
-//   mqttClient.onEventCallback(event);
-// }
+void handleMQTT(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data) {
+  auto *event = static_cast<esp_mqtt_event_handle_t>(event_data);
+  mqttClient.onEventCallback(event);
+}
 
 
 // void printDetail(uint8_t type, int value) {

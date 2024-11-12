@@ -14,6 +14,8 @@
   Generated on: 2024-11-11 14:30:09 (GMT+08)
 */
 
+#ifndef MODEL_DEFINITION
+#define MODEL_DEFINITION
 
 const char *LABELS[] = {
   "no_contact",
@@ -4584,3 +4586,5 @@ alignas(16) unsigned char __output_model_tflite[] = {
   0x0c, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x09
 };
 unsigned int __output_model_tflite_len = 54536;
+
+#endif
